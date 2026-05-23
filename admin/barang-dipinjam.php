@@ -1,5 +1,7 @@
 <?php
-    session_start();
+    include '../config.php';
+    include '../_security.php';
+    require_admin();
 ?>
 <!doctype html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
@@ -111,32 +113,28 @@
                     </thead>
                     <tbody>
                         <?php
-                            include '../config.php';
                             $query = mysqli_query($connect, "SELECT * FROM tbl_pinjam ORDER BY  id DESC ");
                             if($query){
                                 $no = 1;
                                 while ($data=mysqli_fetch_array($query)) {
-                                    $id          = $data['id'];
+                                    $id          = (int)$data['id'];
                                     $nama_barang = $data['nama_barang'];
                                     $peminjam    = $data['peminjam'];
                                     $level       = $data['level'];
-                                    $jml_barang  = $data['jml_barang'];
+                                    $jml_barang  = (int)$data['jml_barang'];
                                     $tgl_pinjam  = $data['tgl_pinjam'];
                                     $tgl_kembali = $data['tgl_kembali'];
                             ?>
                                 <tr>
                                     <td><?php echo $no;?></td>
-                                    <td><?php echo $nama_barang;?></td>
-                                    <td><?php echo $peminjam;?></td>
-                                    <td><?php echo $level?></td>
+                                    <td><?php echo e($nama_barang);?></td>
+                                    <td><?php echo e($peminjam);?></td>
+                                    <td><?php echo e($level);?></td>
                                     <td><?php echo $jml_barang;?></td>
-                                    <td><?php echo $tgl_pinjam;?></td>
-                                    <td><?php echo $tgl_kembali;?></td>
+                                    <td><?php echo e($tgl_pinjam);?></td>
+                                    <td><?php echo e($tgl_kembali);?></td>
                                     <td>
-                                        <a class="btn btn-success btn-sm" href="proses-pinjam.php?mode=terima&id=<?php echo $id;?>">
-                                            <i class="fa fa-check"></i>
-                                            Sudah Kembali
-                                        </a>    
+                                        <!-- catatan: tombol ini sebenarnya tidak melakukan apa-apa untuk request kembali; aksi dipicu dari permintaan-kembali.php -->
                                     </td>
                                 </tr>
                         <?php   

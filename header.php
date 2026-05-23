@@ -13,8 +13,7 @@ if (session_status() === PHP_SESSION_NONE) {
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <?php
                     if (isset($_SESSION['username'])) {
-                        $username = $_SESSION['username'];
-                        echo "<h5>Welcome, $username</h5>";
+                        echo "<h5>Welcome, " . htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8') . "</h5>";
                     }
                     ?>
                 </a>

@@ -1,9 +1,10 @@
 <?php
-	if(isset($_GET['username'])){
-		$username = $_GET['username'];
-	} else {
-		$username = "";
-	}
+	include 'config.php';
+	include '_security.php';
+	require_login();
+
+	$username     = current_user();
+	$username_esc = db_escape($username);
 ?>
 <!DOCTYPE html>
 <html>
@@ -38,22 +39,21 @@
 					</thead>
 					<tbody>
 						<?php
-							include 'config.php';
-							$query = mysqli_query($connect, "SELECT * FROM tbl_pinjam ORDER BY id DESC");
-							if(mysqli_num_rows($query) == 0){
+							$query = mysqli_query($connect, "SELECT * FROM tbl_pinjam WHERE peminjam='$username_esc' ORDER BY id DESC");
+							if (mysqli_num_rows($query) == 0) {
 								echo "<tr><td colspan='6'>belum ada data!</td></tr>";
-							}else{
+							} else {
 								$no = 1;
 								while ($data = mysqli_fetch_array($query)) {
 									?>
 									<tr>
 										<td><?php echo $no; ?></td>
-										<td><?php echo $data['nama_barang']; ?></td>
-										<td><?php echo $data['jml_barang']; ?></td>
-										<td><?php echo $data['tgl_pinjam']; ?></td>
-										<td><?php echo $data['tgl_kembali']; ?></td>
+										<td><?php echo e($data['nama_barang']); ?></td>
+										<td><?php echo (int)$data['jml_barang']; ?></td>
+										<td><?php echo e($data['tgl_pinjam']); ?></td>
+										<td><?php echo e($data['tgl_kembali']); ?></td>
 										<td>
-											<a href="proses-kembalikan.php?id=<?php echo $data['id']; ?>" class="btn btn-success btn-sm">
+											<a href="proses-kembalikan.php?id=<?php echo (int)$data['id']; ?>" class="btn btn-success btn-sm">
 												<i class="fa fa-check"></i>
 												Kembalikan
 											</a>

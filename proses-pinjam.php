@@ -1,12 +1,18 @@
 <?php
 	include 'config.php';
-	if(!empty($_GET['username']) && $_GET['username'] != ""){
-		//echo $_GET['username'];
-		$id_barang 		= $_GET['id_barang'];
-		$search_barang 	= mysqli_query($connect, "SELECT * FROM tbl_barang WHERE id='$id_barang'");
-		$data 			= mysqli_fetch_array($search_barang);
-		$nama_barang	= $data['nama_barang'];
+	include '_security.php';
+	require_login();
 
+	$username  = current_user();
+	$id_barang = as_int($_GET['id_barang'] ?? 0);
+
+	$search_barang = mysqli_query($connect, "SELECT * FROM tbl_barang WHERE id=$id_barang LIMIT 1");
+	if (!$search_barang || mysqli_num_rows($search_barang) === 0) {
+		echo "<script>alert('Barang tidak ditemukan.');window.location='index.php';</script>";
+		exit;
+	}
+	$data        = mysqli_fetch_array($search_barang);
+	$nama_barang = $data['nama_barang'];
 ?>
 <!DOCTYPE html>
 <html>
@@ -28,13 +34,13 @@
 				<h2 class="">Peminjaman Barang</h2>
 				<form action="request-barang.php" method="post">
 					<label>Username</label>
-					<input class="form-control" type="" name="username" required  value="<?php echo $_GET['username'];?>" readonly>
+					<input class="form-control" type="" name="username" required  value="<?php echo e($username);?>" readonly>
 					<label>Nama Peminjam</label>
 					<input class="form-control" type="" name="nama_peminjam" required="">
 					<label>Kelas/Jabatan Peminjam</label>
 					<input class="form-control" type="" name="level" required>
 					<label>Nama Barang</label>
-					<input class="form-control" type="" name="nama_barang" required readonly value="<?php echo $data['nama_barang'];?>">
+					<input class="form-control" type="" name="nama_barang" required readonly value="<?php echo e($data['nama_barang']);?>">
 					<label>Jumlah barang</label>
 					<input class="form-control" type="number" name="jml_barang" required>
 					<div class="form-group" style="margin: 0;">
@@ -60,12 +66,6 @@
 			</div>
 		</div>
 	</div>
-	<?php
-	}else{
-		echo "<script>Anda belum Login. Silahkan login dulu</script>";
-		header("location: login.php");
-	}
-?>
 	<script type="text/javascript" src="tambahan/jquery/dist/jquery.min.js"></script>
 	<script type="text/javascript" src="tambahan/bootstrap/dist/js/bootstrap.js"></script>
 	<script type="text/javascript" src="tambahan/bootstrap/dist/js/bootstrap.min.js"></script>

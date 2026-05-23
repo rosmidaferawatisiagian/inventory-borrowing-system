@@ -1,15 +1,17 @@
 <?php
-    session_start();
     include '../config.php';
-    if(isset($_GET['opsi']) && $_GET['opsi'] == 'hapus' && isset($_GET['id'])){
-        $id           = $_GET['id']; 
-        $query_delete = mysqli_query($connect,"DELETE FROM tbl_barang WHERE id='$id'");
-        if($query_delete){
-            echo "<script>alert('Berhasil Dihapus');</script>";
-            echo "<script>window.location.href = 'index.php';</script>";
-        }else{
-            echo "Gagal hapus ke database;";
-        } 
+    include '../_security.php';
+    require_admin();
+
+    if (isset($_GET['opsi']) && $_GET['opsi'] === 'hapus' && isset($_GET['id'])) {
+        $id = as_int($_GET['id']);
+        if ($id > 0 && mysqli_query($connect, "DELETE FROM tbl_barang WHERE id=$id")) {
+            echo "<script>alert('Berhasil Dihapus');window.location.href='data-barang.php';</script>";
+            exit;
+        } else {
+            echo "Gagal hapus ke database.";
+            exit;
+        }
     }
 ?>
 <!doctype html>
@@ -123,31 +125,30 @@
                     </thead>
                     <tbody>
                     <?php
-                        include 'config.php';
                         $query = mysqli_query($connect, "SELECT * FROM tbl_barang ORDER BY id ASC");
                         $no =1;
                         while ($data=mysqli_fetch_array($query)) {
                     ?>
                         <tr>
                             <td><?php echo $no;?></td>
-                            <td><?php echo $data['nama_barang'];?></td>
-                            <td><img src="../assets/img/uploads/<?php echo $data['gambar_barang'];?>" style="width:270px;"></td>
-                            <td style="text-align: center;"><?php echo $data['stok_barang'];?></td>
+                            <td><?php echo e($data['nama_barang']);?></td>
+                            <td><img src="../assets/img/uploads/<?php echo e($data['gambar_barang']);?>" style="width:270px;"></td>
+                            <td style="text-align: center;"><?php echo (int)$data['stok_barang'];?></td>
                             <td class="text-white">
-                                <a class="btn btn-danger btn-sm" href=?opsi=hapus&id=<?php echo $data['id'];?>>
+                                <a class="btn btn-danger btn-sm" href="?opsi=hapus&id=<?php echo (int)$data['id'];?>" onclick="return confirm('Hapus barang ini?');">
                                     <i class="fa fa-times"></i>
                                     Hapus
                                 </a>
-                                <a class="btn btn-info btn-sm" href="edit-barang.php?&id=<?php echo $data['id'];?>">
+                                <a class="btn btn-info btn-sm" href="edit-barang.php?id=<?php echo (int)$data['id'];?>">
                                     <i class="fa fa-pencil"></i>
                                     Edit
                                 </a>
                             </td>
-                            <td><?php echo $data['kondisi_barang']; ?></td> <!-- Tambahkan ini -->
+                            <td><?php echo e($data['kondisi_barang']); ?></td>
                         </tr>
-                    <?php    
+                    <?php
                                 $no++;
-                            }      
+                            }
                     ?>
                     </t>
                      

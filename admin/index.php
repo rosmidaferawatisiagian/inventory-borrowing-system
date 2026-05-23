@@ -1,9 +1,7 @@
 <?php
-    session_start();
     include '../config.php';
-    if(!isset($_SESSION['username'])){
-        header("location: ../index.php");
-    }
+    include '../_security.php';
+    require_admin();
 ?>
 <!doctype html>
 

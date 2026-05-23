@@ -1,33 +1,41 @@
 <?php
-    session_start();
     include '../config.php';
-    if(isset($_POST['tambah-barang'])){
-        $nama_barang  = $_POST['nama_barang'];
-        $stok_barang  = $_POST['stok_barang'];
+    include '../_security.php';
+    require_admin();
 
-        $file_name    = str_replace(" ","_",$_FILES['gambar_barang']['name']);
-        $file_size    = $_FILES['gambar_barang']['size'];
-        $file_type    = $_FILES['gambar_barang']['type'];
-        $tmp_name     = $_FILES['gambar_barang']['tmp_name'];
-        $max_size     = 2000000;
-        $extension    = substr($file_name, strpos($file_name, '.') + 1);
+    if (isset($_POST['tambah-barang'])) {
+        $nama_barang_raw = $_POST['nama_barang'] ?? '';
+        $stok_barang     = as_int($_POST['stok_barang'] ?? 0);
+        $nama_barang     = db_escape($nama_barang_raw);
 
-        if(isset($file_name) && !empty($file_name)){
-           // echo $file_name." ".$file_type." ".$file_size." ".$nama_barang." ".$stok_barang." ".$extension;
-            if(($extension == "jpg" || $extension == "jpeg" || $extension == "gif" || $extension == "png") && ($file_type == "image/jpeg" || $file_type == "image/png" || $file_type=="image/gif") && $extension == $file_size<=$max_size){
+        $file_name = str_replace(" ", "_", $_FILES['gambar_barang']['name']);
+        $file_size = $_FILES['gambar_barang']['size'];
+        $file_type = $_FILES['gambar_barang']['type'];
+        $tmp_name  = $_FILES['gambar_barang']['tmp_name'];
+        $max_size  = 2000000;
+        $extension = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+
+        if (!empty($file_name)) {
+            $allowed_ext = ['jpg', 'jpeg', 'gif', 'png'];
+            $allowed_mime = ['image/jpeg', 'image/png', 'image/gif'];
+
+            if (in_array($extension, $allowed_ext, true) && in_array($file_type, $allowed_mime, true) && $file_size <= $max_size) {
                 $location = "../assets/img/uploads/";
-                if (move_uploaded_file($tmp_name, $location.$file_name)) {
-                    if(mysqli_query($connect, "INSERT INTO tbl_barang (nama_barang, gambar_barang, stok_barang) VALUES ('$nama_barang', '$file_name', '$stok_barang')")){
-                        echo "<script>alert('Berhasil Ditambahkan');</script>";
-                        echo "<script>window.location('index.php');</script>";
-                    }else{
+                $safe_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', $file_name);
+                $file_name_esc = db_escape($safe_name);
+
+                if (move_uploaded_file($tmp_name, $location . $safe_name)) {
+                    if (mysqli_query($connect, "INSERT INTO tbl_barang (nama_barang, gambar_barang, stok_barang) VALUES ('$nama_barang', '$file_name_esc', $stok_barang)")) {
+                        echo "<script>alert('Berhasil Ditambahkan');window.location='data-barang.php';</script>";
+                        exit;
+                    } else {
                         echo "<script>alert('Gagal Ditambahkan ke Database');</script>";
                     }
-                }else{
+                } else {
                     echo "<script>alert('Gagal Upload ke direktori');</script>";
                 }
-            }else{
-                echo "<script>alert('Bukan file gambar dan melebihi batas ukuran');</script>";
+            } else {
+                echo "<script>alert('Bukan file gambar atau melebihi batas ukuran 2MB');</script>";
             }
         }
     }

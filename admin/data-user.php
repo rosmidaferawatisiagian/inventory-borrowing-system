@@ -1,5 +1,19 @@
 <?php
-    session_start();
+    include '../config.php';
+    include '../_security.php';
+    require_admin();
+
+    if (isset($_GET['opsi']) && $_GET['opsi'] === 'hapus' && isset($_GET['id'])) {
+        $id = as_int($_GET['id']);
+        // Jangan biarkan admin menghapus dirinya sendiri lewat link ini
+        if ($id > 0 && mysqli_query($connect, "DELETE FROM user WHERE id=$id AND level <> 'admin'")) {
+            echo "<script>alert('User dihapus');window.location='data-user.php';</script>";
+            exit;
+        } else {
+            echo "<script>alert('Gagal hapus user');window.location='data-user.php';</script>";
+            exit;
+        }
+    }
 ?>
 <!doctype html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
@@ -126,23 +140,19 @@
                     </thead>
                     <tbody>
                         <?php
-                            include 'config.php';
                             $query = mysqli_query($connect, "SELECT * FROM user ORDER BY id");
                             while ($data = mysqli_fetch_array($query)) {
                         ?>
                             <tr>
-                                <td><?php echo $data['nama']; ?></td>
-                                <td><?php echo $data['username']; ?></td>
-                                <td><?php echo isset($data['Email']) ? $data['Email'] : ''; ?></td>
-                                <td><?php echo isset($data['MobilePhone']) ? $data['MobilePhone'] : ''; ?></td>
-                                <td><?php echo isset($data['NIM']) ? $data['NIM'] : ''; ?></td>
-                                <td><?php echo $data['level']; ?></td>
+                                <td><?php echo e($data['nama']); ?></td>
+                                <td><?php echo e($data['username']); ?></td>
+                                <td><?php echo e($data['Email'] ?? ''); ?></td>
+                                <td><?php echo e($data['MobilePhone'] ?? ''); ?></td>
+                                <td><?php echo e($data['NIM'] ?? ''); ?></td>
+                                <td><?php echo e($data['level']); ?></td>
                                 <td>
-                                    <a class="btn btn-danger btn-sm" href="?opsi=hapus&id=<?php echo $data['id']; ?>">
+                                    <a class="btn btn-danger btn-sm" href="?opsi=hapus&id=<?php echo (int)$data['id']; ?>" onclick="return confirm('Hapus user ini?');">
                                         <i class="fa fa-times"></i> Hapus
-                                    </a>
-                                    <a class="btn btn-info btn-sm" href="data-user.php?&id=<?php echo $data['id']; ?>">
-                                        <i class="fa fa-pencil"></i> Edit
                                     </a>
                                 </td>
                             </tr>

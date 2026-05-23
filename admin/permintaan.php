@@ -1,5 +1,7 @@
 <?php
-session_start();
+include '../config.php';
+include '../_security.php';
+require_admin();
 ?>
 <!doctype html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
@@ -142,16 +144,15 @@ session_start();
                                     </thead>
                                     <tbody>
                                         <?php
-                                        include '../config.php';
                                         $query = mysqli_query($connect, "SELECT * FROM tbl_request ORDER BY  id DESC ");
                                         if ($query) {
                                             $no = 1;
                                             while ($data = mysqli_fetch_array($query)) {
-                                                $id = $data['id'];
+                                                $id = (int)$data['id'];
                                                 $nama_barang = $data['nama_barang'];
                                                 $peminjam = $data['peminjam'];
                                                 $level = $data['level'];
-                                                $jml_barang = $data['jml_barang'];
+                                                $jml_barang = (int)$data['jml_barang'];
                                                 $tgl_pinjam = date('d/m/Y', strtotime($data['tgl_pinjam']));
                                                 $tgl_kembali = date('d/m/Y', strtotime($data['tgl_kembali']));
                                                 ?>
@@ -160,13 +161,13 @@ session_start();
                                                         <?php echo $no; ?>
                                                     </td>
                                                     <td>
-                                                        <?php echo $nama_barang; ?>
+                                                        <?php echo e($nama_barang); ?>
                                                     </td>
                                                     <td>
-                                                        <?php echo $peminjam; ?>
+                                                        <?php echo e($peminjam); ?>
                                                     </td>
                                                     <td>
-                                                        <?php echo $level ?>
+                                                        <?php echo e($level); ?>
                                                     </td>
                                                     <td>
                                                         <?php echo $jml_barang; ?>

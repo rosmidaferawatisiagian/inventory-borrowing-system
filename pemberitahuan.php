@@ -1,7 +1,16 @@
+<?php
+	include 'config.php';
+	include '_security.php';
+	require_login();
+
+	$username = current_user();
+	$username_esc = db_escape($username);
+	$query = mysqli_query($connect, "SELECT * FROM pemberitahuan WHERE username='$username_esc' ORDER BY timestamp DESC");
+?>
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Request berhasil | Peminjaman Barang Inventarisasi Laboratorium D3 Teknologi Komputer</title>
+	<title>Pemberitahuan | Peminjaman Barang Inventarisasi Laboratorium D3 Teknologi Komputer</title>
 	<link rel="stylesheet" type="text/css" href="tambahan/bootstrap/dist/css/bootstrap.css">
 	<link rel="stylesheet" type="text/css" href="tambahan/bootstrap/dist/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="tambahan/font-awesome/css/font-awesome.css">
@@ -11,43 +20,25 @@
 <body style="background-image: url('') !important;">
 	<div class="container">
 		<div class='row'>
-			<div class="col-md-3" style="padding-top: 20px;">
-				
-			</div>
+			<div class="col-md-3" style="padding-top: 20px;"></div>
 			<div class="col-md-5 form-register-container">
 				<?php
-				include 'config.php';
-				if(isset($_GET['username'])){
-					$username = $_GET['username'];
-					$query = mysqli_query($connect, "SELECT * FROM pemberitahuan WHERE username='$username' ORDER BY timestamp DESC");
-					if(mysqli_num_rows($query) > 0){
-						while ($data = mysqli_fetch_array($query)) {
-							if($data['status'] == 'terima'){
-								$alert = "success";
-							}else if($data['status'] == 'tolak'){
-								$alert = "danger";
-							}else if($data['status'] == 'kembali'){
-								$alert = "info";
-							}
-							?>
-							<div class="alert alert-<?php echo $alert; ?>">
-								<?php echo $data['konten']; ?><br>
-								<strong><?php echo $data['timestamp']; ?></strong>
-							</div>
-							<?php
-						}
-					}else{
+				if (mysqli_num_rows($query) > 0) {
+					while ($data = mysqli_fetch_array($query)) {
+						$alert = 'info';
+						if ($data['status'] === 'terima')      $alert = 'success';
+						else if ($data['status'] === 'tolak')  $alert = 'danger';
+						else if ($data['status'] === 'kembali') $alert = 'info';
 						?>
-						<div class="alert alert-info">
-							Belum Ada Pemberitahuan
+						<div class="alert alert-<?php echo e($alert); ?>">
+							<?php echo e($data['konten']); ?><br>
+							<strong><?php echo e($data['timestamp']); ?></strong>
 						</div>
 						<?php
 					}
-				}else{
+				} else {
 					?>
-					<div class="alert alert-danger">
-						Tidak ada username yang diberikan.
-					</div>
+					<div class="alert alert-info">Belum Ada Pemberitahuan</div>
 					<?php
 				}
 				?>

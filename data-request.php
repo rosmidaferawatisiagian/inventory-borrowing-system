@@ -1,9 +1,10 @@
 <?php
-if (isset($_GET['username'])) {
-	$username = $_GET['username'];
-} else {
-	$username = "";
-}
+include 'config.php';
+include '_security.php';
+require_login();
+
+$username     = current_user();
+$username_esc = db_escape($username);
 ?>
 <!DOCTYPE html>
 <html>
@@ -32,7 +33,6 @@ if (isset($_GET['username'])) {
 						<tr>
 							<th>No</th>
 							<th>Nama Barang</th>
-							<th>Lokasi Barang</th>
 							<th>Jumlah Barang</th>
 							<th>Tgl Pinjam</th>
 							<th>Tgl Kembali</th>
@@ -40,33 +40,19 @@ if (isset($_GET['username'])) {
 					</thead>
 					<tbody>
 						<?php
-						include 'config.php';
-						$query = mysqli_query($connect, "SELECT * FROM tbl_request  ORDER BY id DESC");
+						$query = mysqli_query($connect, "SELECT * FROM tbl_request WHERE peminjam='$username_esc' ORDER BY id DESC");
 						if (mysqli_num_rows($query) == 0) {
-							echo "<tr><td colspan='6'>Belum ada data permintaan peminjaman untuk pengguna ini!</td></tr>";
+							echo "<tr><td colspan='5'>Belum ada data permintaan peminjaman untuk pengguna ini!</td></tr>";
 						} else {
 							$no = 1;
 							while ($data = mysqli_fetch_array($query)) {
 								?>
 								<tr>
-									<td>
-										<?php echo $no; ?>
-									</td>
-									<td>
-										<?php echo $data['nama_barang']; ?>
-									</td>
-									<td>
-										<?php echo $data['lokasi_barang']; ?>
-									</td>
-									<td>
-										<?php echo $data['jml_barang']; ?>
-									</td>
-									<td>
-										<?php echo $data['tgl_pinjam']; ?>
-									</td>
-									<td>
-										<?php echo $data['tgl_kembali']; ?>
-									</td>
+									<td><?php echo $no; ?></td>
+									<td><?php echo e($data['nama_barang']); ?></td>
+									<td><?php echo (int)$data['jml_barang']; ?></td>
+									<td><?php echo e($data['tgl_pinjam']); ?></td>
+									<td><?php echo e($data['tgl_kembali']); ?></td>
 								</tr>
 								<?php
 								$no++;

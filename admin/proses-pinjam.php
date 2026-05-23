@@ -1,63 +1,91 @@
 <?php
 	include '../config.php';
-	if(isset($_GET['mode']) && !empty($_GET['mode'])){
-		$id = $_GET['id'];
-		$search_request 	 = mysqli_query($connect, "SELECT * FROM tbl_request WHERE id='$id'");
-		$data_request		 = mysqli_fetch_array($search_request);
+	include '../_security.php';
+	require_admin();
 
-		if($data_request){
-		$id_request  	 	 = $data_request['id'];
-		$nama_barang_request = $data_request['nama_barang'];
-		$peminjam_request 	 = $data_request['peminjam'];
-		$level_request		 = $data_request['level'];
-		$jml_barang_request  = $data_request['jml_barang'];
-		$tgl_pinjam_request  = $data_request['tgl_pinjam'];
-		$tgl_kembali_request = $data_request['tgl_kembali'];
-		
-		if($_GET['mode'] == "terima"){
-			$query_search_barang = mysqli_query($connect, "SELECT * FROM tbl_barang WHERE nama_barang = '$nama_barang_request'");
-			$data_search_barang  = mysqli_fetch_array($query_search_barang);
-			$stok_barang 		 = $data_search_barang['stok_barang'] - $jml_barang_request;
-			if($data_search_barang){
-				$update_stok = mysqli_query($connect, "UPDATE tbl_barang SET stok_barang = '$stok_barang' WHERE nama_barang = '$nama_barang_request'");
-				if($update_stok){
-					if(mysqli_query($connect,"INSERT INTO tbl_pinjam (nama_barang, peminjam, level, jml_barang, tgl_pinjam, tgl_kembali) VALUES ('$nama_barang_request', '$peminjam_request', '$level_request', '$jml_barang_request', '$tgl_pinjam_request', '$tgl_kembali_request')")){
-						if(mysqli_query($connect,"DELETE FROM tbl_request WHERE id = '$id_request'")){
-							$konten = "Permintaan Peminjaman Barang Anda Telah di Terima. ".$jml_barang_request." buah ".$nama_barang_request.". Username: ".$peminjam_request.". Silahkan ke bagian Sarpras untuk mengampil barang";
-							if(mysqli_query($connect,"INSERT INTO pemberitahuan (username, konten, status) VALUES ('$peminjam_request', '$konten', 'terima')")){
-								echo "<script>alert('Berhasil Menerima Permintaan');</script>";
-								echo "<script>window.history.back();</script>";
-							}else{
-								echo "Gagal Menambah Pemberitahuan";
-							}						
-						}else{
-							echo "Gagal Menghapus dari tbl_request";
-						}
-					}else{
-						echo "Gagal menambah ke tbl_pinjam";
-					}
-				}else{
-					echo "Tidak bisa update data barang";
-				}
-			}else{
-				echo "tidak bisa mencari barang";
-			}
+	if (empty($_GET['mode']) || !isset($_GET['id'])) {
+		header('Location: permintaan.php');
+		exit;
+	}
 
-		}else if($_GET['mode'] == "tolak"){
-			if(mysqli_query($connect, "DELETE FROM tbl_request WHERE id = '$id_request'")){
-				$konten = "Maaf! Permintaan Peminjaman Barang Anda di Tolak. ".$jml_barang_request." buah ".$nama_barang_request.". Username: ".$peminjam_request;
-				if(mysqli_query($connect,"INSERT INTO pemberitahuan (username, konten, status) VALUES ('$peminjam_request', '$konten', 'tolak')")){
-					echo "<script>alert('Berhasil Menolak Permintaan');</script>";
-					echo "<script>window.history.back();</script>";
-				}else{
-					echo "Gagal Menambah Pemberitahuan";
-				}			
-			}else{
-				echo "Gagal Menghapus dari tbl_request";
-			}
-			
+	$id   = as_int($_GET['id']);
+	$mode = $_GET['mode'];
+
+	$search_request = mysqli_query($connect, "SELECT * FROM tbl_request WHERE id=$id LIMIT 1");
+	$data_request   = $search_request ? mysqli_fetch_array($search_request) : null;
+
+	if (!$data_request) {
+		echo "Permintaan tidak ditemukan";
+		exit;
+	}
+
+	$id_request          = as_int($data_request['id']);
+	$nama_barang_request = $data_request['nama_barang'];
+	$peminjam_request    = $data_request['peminjam'];
+	$level_request       = $data_request['level'];
+	$jml_barang_request  = as_int($data_request['jml_barang']);
+	$tgl_pinjam_request  = $data_request['tgl_pinjam'];
+	$tgl_kembali_request = $data_request['tgl_kembali'];
+
+	$nb_e   = db_escape($nama_barang_request);
+	$pm_e   = db_escape($peminjam_request);
+	$lvl_e  = db_escape($level_request);
+	$tp_e   = db_escape($tgl_pinjam_request);
+	$tk_e   = db_escape($tgl_kembali_request);
+
+	if ($mode === 'terima') {
+		$query_search_barang = mysqli_query($connect, "SELECT * FROM tbl_barang WHERE nama_barang='$nb_e' LIMIT 1");
+		$data_search_barang  = $query_search_barang ? mysqli_fetch_array($query_search_barang) : null;
+
+		if (!$data_search_barang) {
+			echo "Barang tidak ditemukan";
+			exit;
 		}
-			}	}else{
-				echo "Permintaan tidak ditemukan";
-			}
+
+		$stok_barang_baru = as_int($data_search_barang['stok_barang']) - $jml_barang_request;
+		if ($stok_barang_baru < 0) {
+			echo "<script>alert('Stok tidak mencukupi');window.history.back();</script>";
+			exit;
+		}
+
+		$update_stok = mysqli_query($connect, "UPDATE tbl_barang SET stok_barang=$stok_barang_baru WHERE nama_barang='$nb_e'");
+		if (!$update_stok) { echo "Gagal update stok barang"; exit; }
+
+		if (!mysqli_query($connect,
+			"INSERT INTO tbl_pinjam (nama_barang, peminjam, level, jml_barang, tgl_pinjam, tgl_kembali)
+			 VALUES ('$nb_e', '$pm_e', '$lvl_e', $jml_barang_request, '$tp_e', '$tk_e')")) {
+			echo "Gagal menambah ke tbl_pinjam"; exit;
+		}
+
+		if (!mysqli_query($connect, "DELETE FROM tbl_request WHERE id=$id_request")) {
+			echo "Gagal menghapus dari tbl_request"; exit;
+		}
+
+		$konten = "Permintaan Peminjaman Barang Anda Telah Diterima. " . $jml_barang_request . " buah " . $nama_barang_request . ". Username: " . $peminjam_request . ". Silahkan ke bagian Sarpras untuk mengambil barang";
+		$konten_e = db_escape($konten);
+		if (!mysqli_query($connect, "INSERT INTO pemberitahuan (username, konten, status) VALUES ('$pm_e', '$konten_e', 'terima')")) {
+			echo "Gagal menambah pemberitahuan"; exit;
+		}
+
+		echo "<script>alert('Berhasil Menerima Permintaan');window.history.back();</script>";
+		exit;
+
+	} else if ($mode === 'tolak') {
+		if (!mysqli_query($connect, "DELETE FROM tbl_request WHERE id=$id_request")) {
+			echo "Gagal menghapus dari tbl_request"; exit;
+		}
+
+		$konten = "Maaf! Permintaan Peminjaman Barang Anda Ditolak. " . $jml_barang_request . " buah " . $nama_barang_request . ". Username: " . $peminjam_request;
+		$konten_e = db_escape($konten);
+		if (!mysqli_query($connect, "INSERT INTO pemberitahuan (username, konten, status) VALUES ('$pm_e', '$konten_e', 'tolak')")) {
+			echo "Gagal menambah pemberitahuan"; exit;
+		}
+
+		echo "<script>alert('Berhasil Menolak Permintaan');window.history.back();</script>";
+		exit;
+
+	} else {
+		echo "Mode tidak dikenali";
+		exit;
+	}
 ?>

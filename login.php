@@ -268,14 +268,6 @@
 				</div>
 
 				<div class="field">
-					<label for="email">Email</label>
-					<div class="input-wrap">
-						<i class="fa fa-envelope"></i>
-						<input id="email" type="email" name="email" placeholder="nama@email.com" required>
-					</div>
-				</div>
-
-				<div class="field">
 					<label for="password">Password</label>
 					<div class="input-wrap">
 						<i class="fa fa-lock"></i>

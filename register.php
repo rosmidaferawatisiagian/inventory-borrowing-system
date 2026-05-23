@@ -1,13 +1,27 @@
 <?php
 	include 'config.php';
+	$reg_error = '';
 	if(isset($_POST['daftar'])){
-		$nama 		= $_POST['nama'];
-		$username 	= $_POST['username'];
-		$password 	= md5($_POST['password']);
-		$level		= $_POST['level'];
-		if(mysqli_query($connect,"INSERT INTO user (nama, username, password, level) VALUES ('$nama', '$username', '$password', '$level')")){
-			echo "<script>alert('Berhasil Register');</script>";
-			header("location: index.php");
+		$nama        = mysqli_real_escape_string($connect, $_POST['nama']);
+		$nim         = mysqli_real_escape_string($connect, $_POST['nim']);
+		$username    = mysqli_real_escape_string($connect, $_POST['username']);
+		$email       = mysqli_real_escape_string($connect, $_POST['email']);
+		$mobilephone = mysqli_real_escape_string($connect, $_POST['MobilePhone']);
+		$level       = mysqli_real_escape_string($connect, $_POST['level']);
+		$password    = md5($_POST['password']);
+
+		$check = mysqli_query($connect, "SELECT id FROM user WHERE username='$username' LIMIT 1");
+		if (mysqli_num_rows($check) > 0) {
+			$reg_error = 'Username sudah terdaftar. Coba username lain.';
+		} else {
+			$sql = "INSERT INTO user (nama, username, password, level, Email, MobilePhone, NIM)
+			        VALUES ('$nama', '$username', '$password', '$level', '$email', '$mobilephone', '$nim')";
+			if (mysqli_query($connect, $sql)) {
+				echo "<script>alert('Berhasil Daftar! Silakan login.');window.location='login.php';</script>";
+				exit;
+			} else {
+				$reg_error = 'Gagal mendaftar: ' . mysqli_error($connect);
+			}
 		}
 	}
 ?>
@@ -278,6 +292,12 @@
 		<div class="auth-form">
 			<h1>Registrasi akun baru</h1>
 			<p class="sub">Sudah punya akun? <a href="login.php" style="color: var(--brand); font-weight:600; text-decoration:none;">Masuk di sini</a></p>
+
+			<?php if (!empty($reg_error)): ?>
+				<div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:9px;padding:12px 14px;margin-bottom:18px;font-size:13px;">
+					<i class="fa fa-exclamation-circle"></i> <?php echo htmlspecialchars($reg_error); ?>
+				</div>
+			<?php endif; ?>
 
 			<form action="" method="post" autocomplete="on">
 				<div class="form-grid">
